@@ -135,7 +135,7 @@ fit2 <- qpad_stan$sample(data = sdat_com,
                          output_dir = "stanout", iter_warmup = 1000,
                        iter_sampling = 1000, parallel_chains = 3, chains = 3
                        )
-
+fit2$save_object("stanout/fit2.rds")
 sum2 <- fit2$summary()
 
 ```

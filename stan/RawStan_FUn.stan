@@ -109,7 +109,7 @@ transformed parameters{
 model{
     phi ~ beta(1,1);
     tau ~ beta(1,1);
-    target += ll_dur;
-    target += ll_dist;
+    target += sum(ll_dur);
+    target += sum(ll_dist);
 }
 
