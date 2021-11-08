@@ -1,4 +1,8 @@
-# QPAD_Stan  
+# QPAD_Stan - Implementation of QPAD offsets in Stan
+
+Development of `detect` package functions and QPAD offsets from [https://github.com/psolymos/qpad-workshop](https://github.com/psolymos/qpad-workshop).
+
+For development and interest only. See [https://github.com/BrandonEdwards/hierarchical-bayesian-qpad](https://github.com/BrandonEdwards/hierarchical-bayesian-qpad) for a  proper assement. 
 
 Details about the folders:
 
