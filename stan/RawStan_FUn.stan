@@ -73,6 +73,11 @@ data{
   matrix[n_sites,n_ints] dist;
   // real<lower=0> tau[n_ints];       // Endpoints of observation intervals
 }
+transformed data{
+  int dur_vec[3] = {3,5,10};
+  real q_A[3] = {0.5, 1, -99};
+}
+
 parameters{
    real<lower=0,upper=1> phi;
    real<lower=0,upper=1> tau;
@@ -112,4 +117,31 @@ model{
     target += sum(ll_dur);
     target += sum(ll_dist);
 }
+generated quantities{
+  vector[3] availability_p;
+  vector[3] avg_detect;
+  vector[3] area_sampled;
+  vector[9] corr;
 
+  for (i in 1:3){
+    availability_p[i] = 1 - exp(-1*dur_vec[i] * phi);
+    if(i<3)    {
+      avg_detect[i] = pow(tau,2) * 1-exp(-1* pow(q_A[i],2) / pow(tau,2)) / pow(q_A[i],2);
+      area_sampled[i] = pow(0.5,2) * pi();
+    } else{
+      avg_detect[i] = 1;
+      area_sampled[i] = pow(tau,2) * pi();
+    }
+
+    for(z in 1:3){
+      for(j in 1:3){
+          corr[ (z-1)*3 + j] = area_sampled[z]*availability_p[j]*avg_detect[z];
+        }
+    }
+
+
+
+  }
+
+
+}
