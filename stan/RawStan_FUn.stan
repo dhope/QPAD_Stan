@@ -122,12 +122,13 @@ generated quantities{
   vector[3] avg_detect;
   vector[3] area_sampled;
   vector[9] corr;
+  vector[9] off;
 
   for (i in 1:3){
     availability_p[i] = 1 - exp(-1*dur_vec[i] * phi);
     if(i<3)    {
-      avg_detect[i] = pow(tau,2) * 1-exp(-1* pow(q_A[i],2) / pow(tau,2)) / pow(q_A[i],2);
-      area_sampled[i] = pow(0.5,2) * pi();
+      avg_detect[i] = pow(tau,2) * (1-exp(-1* pow(q_A[i],2) / pow(tau,2) ) ) / pow(q_A[i],2);
+      area_sampled[i] = pow(q_A[i],2) * pi();
     } else{
       avg_detect[i] = 1;
       area_sampled[i] = pow(tau,2) * pi();
@@ -138,6 +139,8 @@ generated quantities{
           corr[ (z-1)*3 + j] = area_sampled[z]*availability_p[j]*avg_detect[z];
         }
     }
+
+    off = log(corr);
 
 
 
