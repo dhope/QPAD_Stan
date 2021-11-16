@@ -24,7 +24,10 @@ load("data/josm-data.rda") # JOSM data
 ```
 
 ```{r}
+
 x <- josm$surveys
+idx <- sample(rownames(x), size = 500, replace = F)
+x <- x[idx,]
 x$FOR <- x$Decid + x$Conif+ x$ConifWet # forest
 x$AHF <- x$Agr + x$UrbInd + x$Roads # 'alienating' human footprint
 x$WET <- x$OpenWet + x$ConifWet + x$Water # wet + water
@@ -43,6 +46,7 @@ x$OBS <- as.factor(x$ObserverID)
 
 ```{r}
 cts <- josm$counts[josm$counts$DetectType1 != "V",]
+
 cts$DurDis <- paste(cts$Dur, cts$Dis)
 table(cts$DurDis)
 
@@ -85,10 +89,12 @@ Removal model
 
 ```{r}
 Ydur <- as.matrix(Xtab(~ SiteID + Dur + SpeciesID, cts)[[spp]])
-Ydur_st <- Ydur[rowSums(Ydur) >0,]
+Ydur <- Ydur[idx,]
+Ydur <- Ydur[rowSums(Ydur) >0,]
+
 Ddur <- matrix(c(3, 5, 10), nrow(Ydur), 3, byrow=TRUE)
 
-Mdur <- cmulti(Ydur | Ddur ~ 1, x[rownames(Ydur),], type="rem")
+Mdur <- cmulti(Ydur | Ddur ~ TSSR + DAY , x[rownames(Ydur),], type="rem")
 
 phi <- drop(exp(model.matrix(Mdur) %*% coef(Mdur)))
 summary(phi)
@@ -99,9 +105,10 @@ Distance sampling
 
 ```{r}
 Ydis <- as.matrix(Xtab(~ SiteID + Dis + SpeciesID, cts)[[spp]])
-Ydis_st <- Ydis[rowSums(Ydis)>0,]
+Ydis <- Ydis[idx,]
+Ydis <- Ydis[rowSums(Ydis)>0,]
 Ddis <- matrix(c(0.5, 1, 1e6), nrow(Ydis), 3, byrow=TRUE)
-Mdis <- cmulti(Ydis | Ddis ~ 1, x[rownames(Ydur),], type="dis")
+Mdis <- cmulti(Ydis | Ddis ~ HAB, x[rownames(Ydur),], type="dis")
 
 
 
@@ -139,6 +146,54 @@ fit2$save_object("stanout/fit2.rds")
 sum2 <- fit2$summary()
 
 ```
+
+
+```{r}
+dat <- list(
+  n_sites_dur = nrow(Ydur),
+  n_sites_dist = nrow(Ydis),
+  n_ints_dur = ncol(Ydur),
+  n_ints_dist = ncol(Ydis),
+  n_dur_parm = 3,
+  n_dist_parm = 3,
+  y_dur = Ydur,
+  y_dist = Ydis,
+  dur = Ddur,
+  dist = Ddis,
+  n_obs_int_dur_by_site = rep(ncol(Ydur), nrow(Ydur)),
+  n_obs_int_dist_by_site = rep(ncol(Ydis), nrow(Ydis)),
+  X_dur = model.matrix(~TSSR + DAY, x[rownames(Ydur),]),
+  X_dist = model.matrix(~HAB, x[rownames(Ydis),])
+  
+)
+library(cmdstanr)
+cov_mod <- cmdstanr::cmdstan_model("stan/QPAD_Stan_cov.stan", 
+                                     cpp_options=list(stan_threads=TRUE) )
+
+fit_cov <- cov_mod$sample(data = dat, 
+                         seed = 42, threads_per_chain = 2,
+                         output_dir = "D:/!_TMP_STANFILES/NW/", iter_warmup = 1000,
+                         iter_sampling = 1000, parallel_chains = 3, chains = 3
+)
+s <- fit_cov$summary()
+s
+d <- fit_cov$draws()
+```
+
+```{r}
+tau_p1 <- bayesplot::mcmc_areas(d, regex_pars = "log_tau")
+phi_p1 <- bayesplot::mcmc_areas(d, regex_pars = "log_phi")
+
+summary(Mdis)
+```
+
+
+
+
+
+
+
+
 
 
 
