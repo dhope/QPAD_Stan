@@ -183,6 +183,14 @@ d <- fit_cov$draws()
 ```{r}
 tau_p1 <- bayesplot::mcmc_areas(d, regex_pars = "log_tau")
 phi_p1 <- bayesplot::mcmc_areas(d, regex_pars = "log_phi")
+library(dplyr)
+dis_tau <- coef(Mdis) %>% tibble(x =., parameter = glue::glue("log_tau[{1:3}]"))
+dis_phi <- coef(Mdur) %>% tibble(x =., parameter = glue::glue("log_phi[{1:3}]"))
+library(ggplot2)
+tau_p1 + geom_vline(data = dis_tau, aes(xintercept = x)) + facet_grid(parameter~., space = 'free_y',
+                                                                      scales='free_y', drop = T)
+phi_p1 + geom_vline(data = dis_phi, aes(xintercept = x)) + 
+  facet_grid(parameter~., space = 'free_y',scales='free_y', drop = T)
 
 summary(Mdis)
 ```
